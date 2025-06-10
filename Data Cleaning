@@ -1,0 +1,45 @@
+Subtask:
+Clean the healthcare dataset by handling missing values and outliers.
+
+Reasoning: Impute missing values, handle outliers in 'Billing Amount', convert relevant columns to appropriate data types, and check for inconsistencies in categorical variables.
+
+
+
+# Missing Value Imputation
+for col in df.columns:
+    if df[col].isnull().any():
+        if pd.api.types.is_numeric_dtype(df[col]):
+            df[col].fillna(df[col].median(), inplace=True)
+        else:
+            df[col].fillna(df[col].mode()[0], inplace=True)
+print("Missing values after imputation:\n", df.isnull().sum())
+
+# Outlier Handling for 'Billing Amount'
+Q1 = df['Billing Amount'].quantile(0.25)
+Q3 = df['Billing Amount'].quantile(0.75)
+IQR = Q3 - Q1
+lower_bound = Q1 - 1.5 * IQR
+upper_bound = Q3 + 1.5 * IQR
+
+outliers = df[(df['Billing Amount'] < lower_bound) | (df['Billing Amount'] > upper_bound)]
+print(f"\nNumber of outliers in 'Billing Amount': {len(outliers)}")
+
+df['Billing Amount'] = df['Billing Amount'].clip(lower=lower_bound, upper=upper_bound)
+print("\nDescriptive statistics for 'Billing Amount' after outlier handling:")
+print(df['Billing Amount'].describe())
+
+# Data Type Conversion
+try:
+    df['Date of Admission'] = pd.to_datetime(df['Date of Admission'])
+    df['Discharge Date'] = pd.to_datetime(df['Discharge Date'])
+    print("\nData types after conversion:")
+    print(df.info())
+    display(df[['Date of Admission', 'Discharge Date']].head())
+except Exception as e:
+    print(f"Error during data type conversion: {e}")
+
+# Consistency Checks
+for col in ['Gender', 'Medical Condition', 'Admission Type']:
+    df[col] = df[col].str.strip().str.lower()
+    print(f"\nValue counts for '{col}' after consistency check:")
+    print(df[col].value_counts())

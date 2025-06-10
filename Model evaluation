@@ -1,0 +1,70 @@
+Model evaluation
+Reasoning: Load the optimized Q-table, evaluate the model on the test set using the Q-table to determine actions, implement a reward function, calculate performance metrics, compare with a baseline strategy, and summarize the results.
+
+import pickle
+import numpy as np
+import pandas as pd
+
+try:
+    with open('optimized_icu_bed_allocation_model.pkl', 'rb') as file:
+        optimized_q_table = pickle.load(file)
+    print("Optimized model loaded successfully.")
+except FileNotFoundError:
+    print("Error: 'optimized_icu_bed_allocation_model.pkl' not found.")
+
+# Helper function
+state_space_size = (10, 10)
+action_space_size = 2
+
+def discretize_state(state):
+    severity = int(state.iloc[3] * 9)
+    los = int(state.iloc[2] * 9)
+    return severity, los
+
+# Evaluation
+def evaluate_model(q_table, test_data):
+    total_reward = 0
+    for i in range(len(test_data)):
+        state_index = discretize_state(test_data.iloc[i])
+        action = np.argmax(q_table[state_index])
+        next_state_index = discretize_state(test_data.iloc[(i+1)%len(test_data)])
+        reward = 0
+        if action == 1 and next_state_index[0] < state_index[0]:
+            reward = 1
+        elif action == 1 and next_state_index[0] >= state_index[0]:
+            reward = -0.5
+        total_reward += reward
+    return total_reward
+
+rl_agent_reward = evaluate_model(optimized_q_table, X_test)
+print(f"RL Agent Total Reward: {rl_agent_reward}")
+
+# Baseline strategy (First-Come, First-Served)
+def fcfs_allocation(test_data):
+    total_reward = 0
+    for i in range(len(test_data) -1):
+      current_severity = test_data.iloc[i]['Severity_Score']
+      next_severity = test_data.iloc[i+1]['Severity_Score']
+      if next_severity < current_severity:
+        total_reward += 1
+      else:
+        total_reward -= 0.5
+    return total_reward
+
+fcfs_reward = fcfs_allocation(X_test)
+print(f"FCFS Total Reward: {fcfs_reward}")
+
+
+# Summary
+print("\nEvaluation Summary:")
+print(f"RL Agent Total Reward: {rl_agent_reward}")
+print(f"FCFS Total Reward: {fcfs_reward}")
+best_params = {'discount_rate': 0.99, 'exploration_decay_rate': 0.001, 'learning_rate': 0.01}
+print(f"Best Hyperparameters: {best_params}")
+
+if rl_agent_reward > fcfs_reward:
+    print("RL agent outperforms FCFS.")
+elif rl_agent_reward < fcfs_reward:
+    print("FCFS outperforms RL agent.")
+else:
+    print("RL agent and FCFS perform equally.")

@@ -1,0 +1,11 @@
+Data loading
+import pandas as pd
+
+try:
+    df = pd.read_csv('healthcare_dataset.csv')
+    display(df.head())
+    print(df.shape)
+    print(df.info())
+except FileNotFoundError:
+    print("Error: 'healthcare_dataset.csv' not found.")
+

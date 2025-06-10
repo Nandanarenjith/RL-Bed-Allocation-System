@@ -1,0 +1,46 @@
+Subtask:
+Prepare the data for the RL model by scaling numerical features, and splitting the data into training, validation, and test sets.
+
+Reasoning: Scale numerical features and split the data into training, validation, and test sets as instructed.
+
+from sklearn.preprocessing import MinMaxScaler
+from sklearn.model_selection import train_test_split
+import numpy as np
+import pandas as pd  # Make sure pandas is imported
+
+# Define features and target variable
+numerical_features = ['Age', 'Billing Amount', 'Length_of_Stay', 'Severity_Score']
+target_variable = 'Severity_Score'
+
+# Separate features (X) and target (y)
+X = df[numerical_features]
+y = df[target_variable]
+
+# Split data into training and temporary sets WITHOUT stratification
+X_train, X_temp, y_train, y_temp = train_test_split(
+    X, y, test_size=0.3, random_state=42
+)
+
+# Split temporary set into validation and test sets WITHOUT stratification
+X_val, X_test, y_val, y_test = train_test_split(
+    X_temp, y_temp, test_size=0.5, random_state=42
+)
+
+# Initialize MinMaxScaler
+scaler = MinMaxScaler()
+
+# Fit and transform the training data
+X_train_scaled = scaler.fit_transform(X_train)
+
+# Transform validation and test data using the same scaler
+X_val_scaled = scaler.transform(X_val)
+X_test_scaled = scaler.transform(X_test)
+
+# Convert scaled data back to dataframes
+X_train = pd.DataFrame(X_train_scaled, columns=numerical_features, index=X_train.index)  # Added index
+X_val = pd.DataFrame(X_val_scaled, columns=numerical_features, index=X_val.index)  # Added index
+X_test = pd.DataFrame(X_test_scaled, columns=numerical_features, index=X_test.index)  # Added index
+
+display(X_train.head())
+display(X_val.head())
+display(X_test.head())

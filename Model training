@@ -1,0 +1,63 @@
+import numpy as np
+import random
+
+# Define the state space (simplified for demonstration)
+# Using 'Severity_Score' and 'Length_of_Stay' as state features.
+# In a real application, a more comprehensive representation is needed.
+state_space_size = (10, 10)  # Discretize Severity and Length of Stay into 10 levels each.
+action_space_size = 2  # 0: No bed allocation, 1: Allocate bed
+
+# Initialize the Q-table
+q_table = np.zeros((state_space_size[0], state_space_size[1], action_space_size))
+
+# Hyperparameters
+learning_rate = 0.1
+discount_rate = 0.95
+exploration_rate = 1.0
+max_exploration_rate = 1.0
+min_exploration_rate = 0.01
+exploration_decay_rate = 0.01
+
+
+def discretize_state(state):
+    severity = int(state[3] * 9)  # Severity_Score
+    los = int(state[2] * 9)     # Length_of_Stay
+    return severity, los
+
+# Training loop (simplified for demonstration)
+episodes = 1000 # Limit the episodes due to resource limits
+for episode in range(episodes):
+    state_index = discretize_state(X_train.iloc[episode % len(X_train)])  # Sample states from training data
+    done = False
+
+    while not done:
+        # Exploration-exploitation trade-off
+        exploration_rate_threshold = random.uniform(0, 1)
+        if exploration_rate_threshold > exploration_rate:
+            action = np.argmax(q_table[state_index])
+        else:
+            action = random.choice(np.arange(action_space_size))
+
+        # Simplified reward (needs refinement based on actual ICU metrics)
+        if action == 1 and state_index[0] > 5:  # Reward allocating bed for high severity
+            reward = 1
+        else:
+            reward = 0
+
+        # Transition to the next state
+        next_state_index = discretize_state(X_train.iloc[(episode + 1) % len(X_train)])
+
+        # Q-table update rule
+        q_table[state_index][action] = q_table[state_index][action] * (1 - learning_rate) + \
+                                         learning_rate * (reward + discount_rate * np.max(q_table[next_state_index]))
+
+        state_index = next_state_index
+
+        # Decay exploration rate
+        exploration_rate = min_exploration_rate + \
+                           (max_exploration_rate - min_exploration_rate) * np.exp(-exploration_decay_rate * episode)
+
+        done = True  # Simplified termination condition
+
+
+print("Q-table:", q_table)
